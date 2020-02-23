@@ -1,7 +1,7 @@
 import mwclient
-from flask import Flask, request, redirect, url_for
+from flask import Flask, request, redirect, url_for, jsonify
 app = Flask(__name__)
-site = None
+site = mwclient.Site("meme.outv.im", "/")
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -10,7 +10,6 @@ def do_login():
         return app.send_static_file("login.html")
     else:
         global site
-        site = mwclient.Site("meme.outv.im", "/")
         try:
             site.login(request.form["username"], request.form["password"])
         except mwclient.errors.LoginError as r:
@@ -35,3 +34,10 @@ def send_edit():
     page.save(data["content"], summary=data["summary"])
     print(data["title"], ": Saved")
     return "OK"
+
+
+@app.route('/there', methods=['POST'])
+def is_there():
+    global site
+    data = request.get_json()
+    return jsonify({"exists": site.pages["JISFW:" + str(data["id"])].exists})

@@ -35,16 +35,29 @@
         <button @click="id++">++</button>
         <br />
         Change id to:
-        <input v-model="changeIdTo" v-on:keyup.enter="updateId" placeholder="快速跳转到 ID，回车执行" />
+        <input
+          v-model="changeIdTo"
+          v-on:keyup.enter="updateId"
+          placeholder="快速跳转到 ID，回车执行"
+        />
         <hr />
-        Redirect? <input v-model="redirectId" placeholder="和某个梗应该放在一起？填入编号" /> <br />
-        Tags: <input v-model="tags" placeholder="标签，以管道符号分隔，可选" /> <br />
+        Redirect?
+        <input
+          v-model="redirectId"
+          placeholder="和某个梗应该放在一起？填入编号"
+        />
+        <br />
+        Tags: <input v-model="tags" placeholder="标签，以管道符号分隔，可选" />
+        <br />
         Source: <input v-model="source" placeholder="来源，可选" /> <br />
         Author: <input v-model="author" placeholder="作者，可选" /> <br />
         <textarea v-model="extra" placeholder="额外内容"></textarea> <br />
         <div>Result:</div>
         <pre><code>{{ finals }}</code></pre>
         <button @click="send">Send!</button>
+        <div v-if="alreadyExists">
+          <b>注意：<a :href="thisUri">JISFW:{{id}}</a>已经存在！</b>
+        </div>
         <a target="_blank" :href="lastUri">Last item</a>
       </div>
     </div>
@@ -58,9 +71,29 @@
           source: "",
           extra: "",
           author: "",
-          changeIdTo: ""
+          changeIdTo: "",
+          alreadyExists: false
+        },
+        watch: {
+          id() {
+            this.alreadyExists = false;
+            fetch("/there", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json; charset=utf-8"
+              },
+              body: JSON.stringify({
+                id: this.id
+              })
+            }).then(x => x.json()).then(x => {
+              this.alreadyExists = x.exists;
+            });
+          }
         },
         computed: {
+          thisUri() {
+            return `https://meme.outv.im/wiki/JISFW:${this.id}`;
+          },
           lastUri() {
             return `https://meme.outv.im/wiki/JISFW:${this.id - 1}`;
           },
