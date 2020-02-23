@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Editor</title>
+    <style>
+      #app {
+        display: flex;
+      }
+      .side {
+        width: 45vw;
+        margin: 0 2.5vw;
+        height: 100vh;
+      }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <div id="iframe" class="side">
+        <iframe
+          id="telegram-post-JISFW-3504"
+          :src="linksrc"
+          scrolling="no"
+          style="border: medium none; overflow: hidden; height: 100%"
+          width="100%"
+          height=""
+          frameborder="0"
+        ></iframe>
+      </div>
+      <div id="operate" class="side">
+        <div>JISFW/{{ id }}</div>
+        <button @click="id--">--</button>
+        <button @click="id++">++</button>
+        <br />
+        Change id to:
+        <input v-model="changeIdTo" v-on:keyup.enter="updateId" placeholder="快速跳转到 ID，回车执行" />
+        <hr />
+        Redirect? <input v-model="redirectId" placeholder="和某个梗应该放在一起？填入编号" /> <br />
+        Tags: <input v-model="tags" placeholder="标签，以管道符号分隔，可选" /> <br />
+        Source: <input v-model="source" placeholder="来源，可选" /> <br />
+        Author: <input v-model="author" placeholder="作者，可选" /> <br />
+        <textarea v-model="extra" placeholder="额外内容"></textarea> <br />
+        <div>Result:</div>
+        <pre><code>{{ finals }}</code></pre>
+        <button @click="send">Send!</button>
+        <a target="_blank" :href="lastUri">Last item</a>
+      </div>
+    </div>
+    <script>
+      var app = new Vue({
+        el: "#app",
+        data: {
+          id: 1,
+          redirectId: "",
+          tags: "",
+          source: "",
+          extra: "",
+          author: "",
+          changeIdTo: ""
+        },
+        computed: {
+          lastUri() {
+            return `https://meme.outv.im/wiki/JISFW:${this.id - 1}`;
+          },
+          linksrc() {
+            return `https://t.me/JISFW/${this.id}?embed=1`;
+          },
+          finals() {
+            if (this.redirectId) {
+              return `#redirect [[JISFW:${this.redirectId}]]`;
+            } else {
+              return (
+                `{{JISFW|id=${this.id}}}` +
+                "\n" +
+                (this.tags ? `{{Tags|${this.tags}}}\n` : "") +
+                (this.source ? `{{Source|${this.source}}}\n` : "") +
+                (this.author ? `{{Author|${this.author}}}\n` : "") +
+                this.extra
+              );
+            }
+          }
+        },
+        methods: {
+          updateId() {
+            this.id = this.changeIdTo;
+            this.changeIdTo = "";
+          },
+          send() {
+            fetch("/send", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json; charset=utf-8"
+              },
+              body: JSON.stringify({
+                title: `JISFW:${this.id}`,
+                content: this.finals,
+                summary: `Edit w/ MemeWriter`
+              })
+            });
+            this.redirectId = this.author = this.tags = this.source = this.extra =
+              "";
+            this.id++;
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
